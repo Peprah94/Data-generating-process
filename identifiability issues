@@ -1,3 +1,4 @@
+
 estimation <- function(lambdatrue, b, psi, omega1, omega2){
   data <- data.frame(lambdatrue, b, psi, omega1, omega2)
   prop <- function(x){x/(1+x)}
@@ -13,12 +14,81 @@ b <- 0.5
 psi <- c(0.2, 0.5)
 omega1 <- c(1,0)
 omega2 <- c(0,1)
-estimation(lambdatrue, b, psi, omega1, omega2)
-
+output_identifiability_0 <- estimation(lambdatrue, b, psi, omega1, omega2)
+data <- data.frame(lambdatrue, b, psi, omega1, omega2)
 ## Second row
 lambdatrue <- c(10,7)
 b <- 0.25
 psi <- c(0.4, 0.5)
 omega1 <- c(1,0)
 omega2 <- c(0,1)
-estimation(lambdatrue, b, psi, omega1, omega2)
+output_identifiability_1 <- estimation(lambdatrue, b, psi, omega1, omega2)
+
+
+
+a <- function(b, psi, omega1, omega2, lambda_obs, lambdatrue){
+  ret <- b*psi*(omega1 + lambdatrue*omega2 + omega1*lambdatrue)
+  return(ret)
+}
+
+b <- function(b, psi, omega1, omega2, lambda_obs, lambdatrue){
+  ret <- b*psi*lambdatrue*omega2 - lambda_obs*(1+lambdatrue)
+  return(ret)
+  
+}
+
+c_est <- function(b, psi, omega1, omega2, lambda_obs, lambdatrue){
+ret <- -lambda_obs*(1+lambdatrue)
+return(ret)
+}
+
+#data <- data.frame(lambdatrue, b, psi, omega1, omega2)
+estimate_quadratric <- function(b, psi, omega1, omega2, lambda_obs, lambdatrue){
+  a <- b*psi*(omega1 + lambdatrue*omega2 + omega1*lambdatrue)
+  b <- b*psi*lambdatrue*omega2 - lambda_obs*(1+lambdatrue)
+  c <- -lambda_obs*(1+lambdatrue)
+  return(list(a=a,b=b,c=c))
+}
+
+abc <- estimate_quadratric(data[1,2],data[1,3], data[1,4], data[1,5], output_identifiability_1[1], data[2,1] )
+
+solve_quadratic <- function(abc){
+  a <- abc[[1]];b <- abc[[2]];c <- abc[[3]]
+  sol_1 <- (-b - sqrt(b^2 - 4*a*c))/(2*a)
+  sol_2 <- (-b + sqrt(b^2 - 4*a*c))/(2*a)
+  return(c(sol_1,sol_2))
+}
+solve_quadratic(abc)
+
+
+#Third row
+K <- 100
+lambdatrue <- (c(10,7))
+b <- 0.5/K
+psi <- c(0.2, 0.5)
+omega1 <- c(1,0)
+omega2 <- c(0,1)
+#output_identifiability_0 <- estimation(lambdatrue, b, psi, omega1, omega2)
+data <- data.frame(lambdatrue, b, psi, omega1, omega2)
+
+abc <- estimate_quadratric(data[1,2],data[1,3], data[1,4], data[1,5],output_identifiability_0[1]  , data[2,1] )
+solve_quadratic(abc)
+
+new_lambda_true <- solve_quadratic(abc)[2]
+K <- 100
+lambdatrue <- (c(new_lambda_true,7))
+b <- 0.5/K
+psi <- c(0.2, 0.5)
+omega1 <- c(1,0)
+omega2 <- c(0,1)
+#output_identifiability_0 <- estimation(lambdatrue, b, psi, omega1, omega2)
+data <- data.frame(lambdatrue, b, psi, omega1, omega2)
+output_identifiability_1 <- estimation(lambdatrue, b, psi, omega1, omega2)
+
+
+-0.909/0.2 ## Intercept
+
+sqrt(4*(99)*0.1*0.909  + ((0.909*-99)^2) + (2*(0.909^2)*99))/(0.2)
+
+p1 <- (0.909*99)/0.2
+p2 <- sqrt(4*(99)*0.1*0.909  + ((0.909*-99)^2) + (2*(0.909^2)*99))/(0.2)
