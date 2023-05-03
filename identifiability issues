@@ -1,80 +1,73 @@
+# This script is for estimating the values of the 
+# observed intensity of species 1 and 2 under the intuitive
+# example displayed in Table 2
 
+# Define a general function to use
 estimation <- function(lambdatrue, b, psi, omega){
   product_intensty <- (lambdatrue * b * psi)
   ret <- t(omega) %*% product_intensty
-  # prop <- function(x){x/(1+x)}
-  # lambdaobs <- apply(data, 1, function(x){
-  #   x[1] * x[2]* x[3]*(x[4]* prop(data[1,1]) + x[5]* prop(data[2,1]))
-  # })
   return(ret)
 }
 
-### First row
-#baseline , perfect clasification
-lambdatrue <- c(10,7)
-b <- 0.5
-psi <- c(0.2, 0.5)
-omega <- diag(2)
-# omega1 <- c(1,0)
-# omega2 <- c(0,1)
-output_identifiability_0 <- estimation(lambdatrue, b, psi, omega)
-#data <- data.frame(lambdatrue, b, psi, omega1, omega2)
 
-## Second row
-#b/2, psi*2, perfect clasification
-lambdatrue <- c(10,7)
-b <- 0.25
-psi <- c(0.4, 0.5)
-omega <- diag(2)
-output_identifiability_1 <- estimation(lambdatrue, b, psi,  omega)
+##############
+# Perfect classification
+##############
 
-rr <- cbind(output_identifiability_0, output_identifiability_1)
+#defining parameters
+K = 0.5 #scaling factor
+lambdatrue <- c(10,7) #True intensity
+b <- 0.5 #sampling probability
+psi <- c(0.2, 0.5) # detection probability
+omega <- diag(2) #classification probability
 
-# Third row
-#lamda*k, either b or psi/k, perfect classification
-K = 100
-lambdatrue <- K*c(10,7)
-b <- 0.5/K
-psi <- c(0.2, 0.5)
-omega <- diag(2)
-output_identifiability_2 <- estimation(lambdatrue, b, psi,  omega)
-rr <- cbind(rr, output_identifiability_2)
-print(rr)
+#baseline results
+baselineRes <- estimation(lambdatrue, b, psi, omega)
+
+# Second row: k*lambda1 and b/k
+lambdatrue[1] <- lambdatrue[1] *K
+b1 <- b/K # will need original b again
+row2Res <- estimation(lambdatrue, b1, psi,  omega)
+
+# Third row: k*lambda1 and psi_1/k
+psi[1] <- psi[1]/K
+row3Res <- estimation(lambdatrue, b, psi,  omega)
 
 
+##############
+# Imperfect classification
+##############
 
-#Forth row
-#baseline, misclssification
-K = 1
-lambdatrue <- c(10*K,7)
-b <- 0.5/K
-psi <- c(0.2, 0.5)
-omega <- matrix(c(0.5,0.5, 0.2, 0.8), nrow=2, ncol=2, byrow=T)
-output_identifiability_3 <- estimation(lambdatrue, b, psi,  omega)
+#defining parameters
+K = 0.5 #scaling factor
+lambdatrue <- c(10,7) #True intensity
+b <- 0.5 #sampling probability
+psi <- c(0.2, 0.5) # detection probability
+omega <- matrix(c(0.5,0.5, 0.2, 0.8),
+                nrow=2, 
+                ncol=2, 
+                byrow=T) #classification probability
 
-#lambda * K, psi/k, misclassification
-K = 100
-lambdatrue <- K*c(10,7)
-b <- 0.5
-psi <- 1/K*c(0.2, 0.5)
-omega <- matrix(c(0.5,0.5, 0.2, 0.8), nrow=2, ncol=2, byrow=T)
-output_identifiability_4 <- estimation(lambdatrue, b, psi,  omega)
+#baseline results
+baselineImperfectRes <- estimation(lambdatrue, b, psi, omega)
 
-#both lambdas * K, b/k, misclassification
-K = 100
-lambdatrue <- K*c(10,7)
-b <-1/K* 0.5
-psi <- c(0.2, 0.5)
-omega <- matrix(c(0.5,0.5, 0.2, 0.8), nrow=2, ncol=2, byrow=T)
-output_identifiability_5 <- estimation(lambdatrue, b, psi,  omega)
 
-##only lambdas * K, b/k, misclassification
-K = 100
-lambdatrue <- c(K*10,7)
-b <-1/K* 0.5
-psi <- c(0.2, 0.5)
-omega <- matrix(c(0.5,0.5, 0.2, 0.8), nrow=2, ncol=2, byrow=T)
-output_nonidentifiability <- estimation(lambdatrue, b, psi,  omega)
+#Fifth row: k*lambda1 and psi_1/k
+lambdatrue[1] <- lambdatrue[1] *K
+psi1 <- psi * c(1/K, 1)
+row5Res <- estimation(lambdatrue, b, psi1,  omega)
 
-rr <- cbind(rr, output_identifiability_3, output_identifiability_4, output_identifiability_5, output_nonidentifiability)
-rr
+#Sixth row
+lambdatrue[2] <- lambdatrue[2] *K
+b <-1/K* b
+row6Res <- estimation(lambdatrue, b, psi,  omega)
+
+# Put all data together
+allResults <- data.frame(baselineRes,
+                    row2Res, 
+                    row3Res,
+                    baselineImperfectRes,
+                    row5Res,
+                    row6Res)
+rownames(allResults) <- c("observedInt1",
+                          "observedInt2")
